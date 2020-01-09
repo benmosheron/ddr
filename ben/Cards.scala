@@ -94,5 +94,58 @@ object Cards {
     ("Peddler",          8, Set[Resource]())
   ).map(toCard(Prosperity))
 
-  val cards: Set[Card] = base ++ seaside ++ prosperity
+  val renaissance = Set(
+    ("Border Guard",     2,Set[Resource]()),
+    ("Ducat",            2,Set[Resource]()),
+    ("Lackeys",          2,Set[Resource]()),
+    ("Acting Troupe",    3,Set[Resource]()),
+    ("Cargo Ship",       3,Set[Resource]()),
+    ("Experiment",       3,Set[Resource]()),
+    ("Improve",          3,Set[Resource]()),
+    ("Flag Bearer",      4,Set[Resource]()),
+    ("Hideout",          4,Set[Resource]()),
+    ("Inventor",         4,Set[Resource]()),
+    ("Mountain Village", 4,Set[Resource]()),
+    ("Patron",           4,Set[Resource]()),
+    ("Priest",           4,Set[Resource]()),
+    ("Research",         4,Set[Resource]()),
+    ("Silk Merchant",    4,Set[Resource]()),
+    ("Old Witch",        5,Set[Resource]()),
+    ("Recruiter",        5,Set[Resource]()),
+    ("Scepter",          5,Set[Resource]()),
+    ("Scholar",          5,Set[Resource]()),
+    ("Sculptor",         5,Set[Resource]()),
+    ("Seer",             5,Set[Resource]()),
+    ("Spices",           5,Set[Resource]()),
+    ("Swashbuckler",     5,Set[Resource]()),
+    ("Treasurer",        5,Set[Resource]()),
+    ("Villain",          5,Set[Resource]())
+    // ("Flag",             ,Set[Resource]()), // these are projects/artifacts
+    // ("Horn",             ,Set[Resource]()),
+    // ("Key",              ,Set[Resource]()),
+    // ("Lantern",          ,Set[Resource]()),
+    // ("Treasure Chest",   ,Set[Resource]()),
+    // ("Cathedral",        ,Set[Resource]()),
+    // ("City Gate",        ,Set[Resource]()),
+    // ("Pageant",          ,Set[Resource]()),
+    // ("Sewers",           ,Set[Resource]()),
+    // ("Star Chart",       ,Set[Resource]()),
+    // ("Exploration",      ,Set[Resource]()),
+    // ("Fair",             ,Set[Resource]()),
+    // ("Silos",            ,Set[Resource]()),
+    // ("Sinister Plot",    ,Set[Resource]()),
+    // ("Academy",          ,Set[Resource]()),
+    // ("Capitalism",       ,Set[Resource]()),
+    // ("Fleet",            ,Set[Resource]()),
+    // ("Guildhall",        ,Set[Resource]()),
+    // ("Piazza",           ,Set[Resource]()),
+    // ("Road Network",     ,Set[Resource]()),
+    // ("Barracks",         ,Set[Resource]()),
+    // ("Crop Rotation",    ,Set[Resource]()),
+    // ("Innovation",       ,Set[Resource]()),
+    // ("Canal",            ,Set[Resource]()),
+    // ("Citadel",          ,Set[Resource]())
+  ).map(toCard(Renaissance))
+
+  val cards: Set[Card] = base ++ seaside ++ prosperity ++ renaissance
 }

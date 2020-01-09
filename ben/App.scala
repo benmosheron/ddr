@@ -6,10 +6,11 @@ import scala.math.Ordering
 
 // Supported Expansion Packs
 sealed trait Pack
-object Pack { val all: Set[Pack] = Set(Base, Seaside, Prosperity) }
+object Pack { val all: Set[Pack] = Set(Base, Seaside, Prosperity, Renaissance) }
 case object Base extends Pack
 case object Seaside extends Pack
 case object Prosperity extends Pack
+case object Renaissance extends Pack
 
 // Extra resource required by some cards
 sealed trait Resource { val name: String }

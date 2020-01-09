@@ -34,7 +34,7 @@ object Cards {
     ("Market",       5, Set[Resource]()),
     ("Mine",         5, Set[Resource]()),
     ("Witch",        5, Set[Resource](Curse)),
-    ("Adventurer",   6, Set[Resource]()),
+    ("Adventurer",   6, Set[Resource]())
   ).map(toCard(Base))
 
   val seaside = Set(
@@ -63,7 +63,7 @@ object Cards {
     ("Outpost",         5, Set[Resource]()),
     ("Tactician",       5, Set[Resource]()),
     ("Treasury",        5, Set[Resource]()),
-    ("Wharf",           5, Set[Resource]()),
+    ("Wharf",           5, Set[Resource]())
   ).map(toCard(Seaside))
 
   val prosperity = Set(
@@ -91,7 +91,7 @@ object Cards {
     ("Expand",           7, Set[Resource]()),
     ("Forge",            7, Set[Resource]()),
     ("King's Court",     7, Set[Resource]()),
-    ("Peddler",          8, Set[Resource]()),
+    ("Peddler",          8, Set[Resource]())
   ).map(toCard(Prosperity))
 
   val cards: Set[Card] = base ++ seaside ++ prosperity

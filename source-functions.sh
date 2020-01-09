@@ -1,5 +1,6 @@
 
 function build {
+  mkdir -p out
   scalac -cp . -d out ben/*.scala
 }
 

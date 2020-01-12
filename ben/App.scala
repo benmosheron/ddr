@@ -5,12 +5,12 @@ import scala.util.Random
 import scala.math.Ordering
 
 // Supported Expansion Packs
-sealed trait Pack
+sealed trait Pack { val order: Int }
 object Pack { val all: Set[Pack] = Set(Base, Seaside, Prosperity, Renaissance) }
-case object Base extends Pack
-case object Seaside extends Pack
-case object Prosperity extends Pack
-case object Renaissance extends Pack
+case object Base extends Pack { val order = 1 }
+case object Seaside extends Pack { val order = 2 }
+case object Prosperity extends Pack { val order = 3 }
+case object Renaissance extends Pack { val order = 4 }
 
 // Extra resource required by some cards
 sealed trait Resource { val name: String }
@@ -57,6 +57,9 @@ object App {
 
   val packName: Pack => String = p => p.toString.toLowerCase
 
+  def fst[A,B](t: (A, B)): A = t._1
+  def snd[A,B](t: (A, B)): B = t._2
+
   def parsePacks(packStrings: List[String]): Set[Pack] = if (packStrings.isEmpty) Pack.all else {
     val packsStringsLC = packStrings.map(_.toLowerCase)
     // Print unknown packs
@@ -99,11 +102,15 @@ object App {
   }
 
   def printDeck(deck: Deck): String = deck.groupBy(_.pack).map {
-    case (pack, cards) => s"""
+    case (pack, cards) => (s"""
     |$pack (${cards.size}):
     |${printCards(cards.toList)}
-    """.stripMargin
-  }.mkString("\n") + "\n" + printResources(deck)
+    """.stripMargin, pack.order)
+  }
+  .toList
+  .sortBy(snd)
+  .map(fst)
+  .mkString("\n") + "\n" + printResources(deck)
 
   def main(args: Array[String]): Unit = {
     val packs = parsePacks(args.toList)

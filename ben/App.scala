@@ -5,12 +5,15 @@ import scala.util.Random
 import scala.math.Ordering
 
 // Supported Expansion Packs
-sealed trait Pack { val order: Int }
-object Pack { val all: Set[Pack] = Set(Base, Seaside, Prosperity, Renaissance) }
-case object Base extends Pack { val order = 1 }
-case object Seaside extends Pack { val order = 2 }
-case object Prosperity extends Pack { val order = 3 }
-case object Renaissance extends Pack { val order = 4 }
+sealed trait Pack { val order: Int; val alias: String }
+object Pack {
+  val all: Set[Pack] = Set(Base, Seaside, Prosperity, Renaissance)
+  val aliases: Set[String] = all.map(_.alias)
+}
+case object Base extends Pack { val order = 1; val alias = "b" }
+case object Seaside extends Pack { val order = 2; val alias = "s" }
+case object Prosperity extends Pack { val order = 3; val alias = "p" }
+case object Renaissance extends Pack { val order = 4; val alias = "r" }
 
 // Extra resource required by some cards
 sealed trait Resource { val name: String }
@@ -60,8 +63,15 @@ object App {
   def fst[A,B](t: (A, B)): A = t._1
   def snd[A,B](t: (A, B)): B = t._2
 
+  // b r => base renaissance
+  def deAliasPacks(packStrings: List[String]): List[String] = packStrings.map {
+    case a if (Pack.aliases.contains(a)) => Pack.all.find(p => p.alias == a).get.toString
+    case s => s
+  }
+
   def parsePacks(packStrings: List[String]): Set[Pack] = if (packStrings.isEmpty) Pack.all else {
-    val packsStringsLC = packStrings.map(_.toLowerCase)
+    val packsStringsLC = deAliasPacks(packStrings).map(_.toLowerCase)
+
     // Print unknown packs
     packsStringsLC
       .foreach(p => if(!Pack.all.map(packName).contains(p)) println(s"Unknown pack [$p]"))

@@ -25,12 +25,19 @@ case object NativeVillageMat extends Resource { val name = "Native Village Mat" 
 case object IslandMat extends Resource { val name = "Island Mat" }
 case object PirateShipMat extends Resource { val name = "Pirate Ship Mat" }
 case object TradeRouteMat extends Resource { val name = "Trade Route Mat" }
+case object Lantern extends Resource { val name = "Lantern" }
+case object Horn extends Resource { val name = "Horn" }
+case object Coffers extends Resource { val name = "Coffers" }
+case object Villagers extends Resource { val name = "Villagers" }
+case object Flag extends Resource { val name = "Flag" }
+case object TreasureChest extends Resource { val name = "Treasure Chest" }
+case object Key extends Resource { val name = "Key" }
 
 // Cost to buy the card.
 sealed trait Cost
 object Cost {
   implicit object CostOrdering extends Ordering[Cost] {
-    def compare(a: Cost, b: Cost): Int = (a,b) match {
+    def compare(a: Cost, b: Cost): Int = (a, b) match {
       case (MiscCost, MiscCost)         => 0
       case (MiscCost, _)                => 1
       case (_, MiscCost)                => -1
@@ -41,13 +48,20 @@ object Cost {
 case object MiscCost extends Cost
 case class KnownCost(v: Int) extends Cost
 
-case class Card(name: String, pack: Pack, resources: Set[Resource], cost: Cost)
+sealed trait Card {
+  val name: String
+  val pack: Pack
+  val resources: Set[Resource]
+  val cost: Cost
+}
 object Card {
   implicit object CardOrderingByCost extends Ordering[Card] {
     def compare(a: Card, b: Card): Int = Cost.CostOrdering.compare(a.cost, b.cost)
   }
   implicit val CardOrderingByName: Ordering[Card] = Ordering.by[Card, String](_.name)
 }
+case class NormalCard(name: String, pack: Pack, resources: Set[Resource], cost: Cost) extends Card
+case class Project(name: String, pack: Pack, resources: Set[Resource], cost: Cost) extends Card
 
 
 object App {
@@ -81,9 +95,7 @@ object App {
   def resources(deck: Deck): Set[Resource] = deck.flatMap(_.resources)
 
   // Pick a random set of cards
-  def pick(fromPacks: Set[Pack])(all: Deck): Deck = {
-    val n = 10
-    val domain = all.filter(c => fromPacks.contains(c.pack))
+  def pickNFromDeck(n: Int, deck: Deck): Deck = {
     def _pick(remaining: Deck, current: Deck): Deck = {
       if     (current.size == n) current
       else if(remaining.size == 0) current
@@ -92,7 +104,13 @@ object App {
         _pick(remaining - next, current + next)
       }
     }
-    _pick(domain, Set())
+    _pick(deck, Set())
+  }
+
+  def pick(fromPacks: Set[Pack])(all: Deck)(projects: Deck): Deck = {
+    val n = 10
+    val domain = all.filter(c => fromPacks.contains(c.pack))
+    pickNFromDeck(n, domain) ++ pickNFromDeck(2, projects)
   }
 
   def printCost(cost: Cost): String = cost match {
@@ -100,7 +118,12 @@ object App {
     case KnownCost(c) => c.toString
   }
 
-  def printCards(cards: List[Card]): String = cards.sorted.map(c => "  " + c.name + " (" + printCost(c.cost) + ")").mkString("\n")
+  def printCard(card: Card): String = card match {
+    case NormalCard(name, _, _, cost) => s"  $name (${printCost(cost)})"
+    case Project(name, _, _, cost) => s"  $name (${printCost(cost)} Project)"
+  }
+
+  def printCards(cards: List[Card]): String = cards.sorted.map(printCard).mkString("\n")
 
   def printResources(deck: Deck): String = {
     val resourcesNeeded = resources(deck)
@@ -124,6 +147,6 @@ object App {
 
   def main(args: Array[String]): Unit = {
     val packs = parsePacks(args.toList)
-    println(printDeck(pick(packs)(Cards.cards)))
+    println(printDeck(pick(packs)(Cards.cards)(Cards.projects)))
   }
 }

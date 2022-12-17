@@ -110,7 +110,11 @@ object App {
   def pick(fromPacks: Set[Pack])(all: Deck)(projects: Deck): Deck = {
     val n = 10
     val domain = all.filter(c => fromPacks.contains(c.pack))
-    pickNFromDeck(n, domain) ++ pickNFromDeck(2, projects)
+
+    val pickedCards = pickNFromDeck(n, domain)
+    val pickedProjects = if (fromPacks.contains(Renaissance)) pickNFromDeck(2, projects) else Set()
+
+    pickedCards ++ pickedProjects
   }
 
   def printCost(cost: Cost): String = cost match {

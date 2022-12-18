@@ -5,33 +5,39 @@ import scala.util.Random
 import scala.math.Ordering
 
 // Supported Expansion Packs
-sealed trait Pack { val order: Int; val alias: String }
+sealed trait Pack { val order: Int; val alias: String; val resources: Set[Resource] = Set() }
 object Pack {
   val all: Set[Pack] = Set(Base, Seaside, Prosperity, Renaissance)
   val aliases: Set[String] = all.map(_.alias)
+  implicit val PackOrdering: Ordering[Pack] = Ordering[Int].on(_.order)
 }
 case object Base extends Pack { val order = 1; val alias = "b" }
 case object Seaside extends Pack { val order = 2; val alias = "s" }
-case object Prosperity extends Pack { val order = 3; val alias = "p" }
+case object Prosperity extends Pack { val order = 3; val alias = "p"; override val resources: Set[Resource] = Set(Platinum, Colony) }
 case object Renaissance extends Pack { val order = 4; val alias = "r" }
 
 // Extra resource required by some cards
-sealed trait Resource { val name: String }
-case object Curse extends Resource { val name = "Curse" }
-case object EmbargoToken extends Resource { val name = "Embargo Token" }
-case object CoinToken extends Resource { val name = "Coin Token" }
-case object VictoryToken extends Resource { val name = "Victory Token" }
-case object NativeVillageMat extends Resource { val name = "Native Village Mat" }
-case object IslandMat extends Resource { val name = "Island Mat" }
-case object PirateShipMat extends Resource { val name = "Pirate Ship Mat" }
-case object TradeRouteMat extends Resource { val name = "Trade Route Mat" }
-case object Lantern extends Resource { val name = "Lantern" }
-case object Horn extends Resource { val name = "Horn" }
-case object Coffers extends Resource { val name = "Coffers" }
-case object Villagers extends Resource { val name = "Villagers" }
-case object Flag extends Resource { val name = "Flag" }
-case object TreasureChest extends Resource { val name = "Treasure Chest" }
-case object Key extends Resource { val name = "Key" }
+sealed trait Resource { val name: String; val pack: Pack }
+object Resource {
+  implicit val ResourceOrdering: Ordering[Resource] = Ordering[(Pack, String)].on(r => (r.pack, r.name))
+}
+case object Platinum extends Resource { val name = "Platinum"; val pack = Prosperity }
+case object Colony extends Resource { val name = "Colony"; val pack = Prosperity }
+case object Curse extends Resource { val name = "Curse"; val pack = Base }
+case object EmbargoToken extends Resource { val name = "Embargo Token"; val pack = Prosperity }
+case object CoinToken extends Resource { val name = "Coin Token"; val pack = Prosperity }
+case object VictoryToken extends Resource { val name = "Victory Token"; val pack = Prosperity }
+case object NativeVillageMat extends Resource { val name = "Native Village Mat"; val pack = Seaside }
+case object IslandMat extends Resource { val name = "Island Mat"; val pack = Seaside }
+case object PirateShipMat extends Resource { val name = "Pirate Ship Mat"; val pack = Seaside }
+case object TradeRouteMat extends Resource { val name = "Trade Route Mat"; val pack = Seaside }
+case object Lantern extends Resource { val name = "Lantern"; val pack = Renaissance }
+case object Horn extends Resource { val name = "Horn"; val pack = Renaissance }
+case object Coffers extends Resource { val name = "Coffers"; val pack = Renaissance }
+case object Villagers extends Resource { val name = "Villagers"; val pack = Renaissance }
+case object Flag extends Resource { val name = "Flag"; val pack = Renaissance }
+case object TreasureChest extends Resource { val name = "Treasure Chest"; val pack = Renaissance }
+case object Key extends Resource { val name = "Key"; val pack = Renaissance }
 
 // Cost to buy the card.
 sealed trait Cost
@@ -67,6 +73,7 @@ case class Project(name: String, pack: Pack, resources: Set[Resource], cost: Cos
 object App {
 
   import Card.CardOrderingByName
+  import Resource.ResourceOrdering
 
   type Deck = Set[Card]
 
@@ -92,7 +99,7 @@ object App {
     Pack.all.filter(p => packsStringsLC.contains(packName(p)))
   }
 
-  def resources(deck: Deck): Set[Resource] = deck.flatMap(_.resources)
+  def resources(deck: Deck): List[Resource] = (deck.flatMap(_.resources) ++ deck.flatMap(_.pack.resources)).toList
 
   // Pick a random set of cards
   def pickNFromDeck(n: Int, deck: Deck): Deck = {
@@ -129,12 +136,14 @@ object App {
 
   def printCards(cards: List[Card]): String = cards.sorted.map(printCard).mkString("\n")
 
+  def printResource(resource: Resource): String = s"${resource.pack}: ${resource.name}"
+
   def printResources(deck: Deck): String = {
-    val resourcesNeeded = resources(deck)
+    val resourcesNeeded = resources(deck).sorted
     if(resourcesNeeded.isEmpty) "You don't need any resources"
     else s"""
       |Resources you will need:
-      |${resourcesNeeded.map(_.name).map("  " + _).mkString("\n")}
+      |${resourcesNeeded.map(printResource).map("  " + _).mkString("\n")}
       """.stripMargin
   }
 

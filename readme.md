@@ -4,6 +4,8 @@ A command line tool for generating dominion games. Currently supports the follow
 * base game
 * seaside
 * prosperity
+* renaissance
+* menagerie
 
 ### Prerequisites
 
@@ -13,16 +15,20 @@ A command line tool for generating dominion games. Currently supports the follow
 
 * verify you have scala installed. The commands `scala` and `scalac` are required.
 * clone this repository
-* source source-function.sh
+* on unix: source source-function.sh
 * build with `build`
 * run with `run`
 
 ### Example
 
-Generate a random game using cards from all supported expansions:
+Generate a random game for 4 players using cards from all supported expansions:
 
-`run` 
+`run 4` 
 
-Generate a random game using cards from seaside and prosperity:
+Generate a random game using cards from the base game, seaside and prosperity:
 
-`run seaside prosperity`
+`run 4 base seaside prosperity`
+
+or
+
+`run 4 b s p`

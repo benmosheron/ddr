@@ -8,7 +8,7 @@ import scala.util.Try
 // Supported Expansion Packs
 sealed trait Pack { val order: Int; val alias: String; val resources: Set[Resource] = Set() }
 object Pack {
-  val all: Set[Pack] = Set(Base, Seaside, Prosperity, Renaissance)
+  val all: Set[Pack] = Set(Base, Seaside, Prosperity, Renaissance, Menagerie)
   val aliases: Set[String] = all.map(_.alias)
   implicit val PackOrdering: Ordering[Pack] = Ordering[Int].on(_.order)
 }
@@ -16,6 +16,8 @@ case object Base extends Pack { val order = 1; val alias = "b" }
 case object Seaside extends Pack { val order = 2; val alias = "s" }
 case object Prosperity extends Pack { val order = 3; val alias = "p"; override val resources: Set[Resource] = Set(Platinum, Colony) }
 case object Renaissance extends Pack { val order = 4; val alias = "r" }
+
+case object Menagerie extends Pack { val order = 5; val alias = "m" }
 
 // Extra resource required by some cards
 sealed trait Resource { val name: String; val pack: Pack; val supply: Supply = Unlimited }
@@ -33,7 +35,7 @@ case object Province extends AbstractResource("Province", Base, Victory)
 case object Platinum extends AbstractResource ("Platinum", Prosperity, Twelve)
 case object Colony extends AbstractResource ("Colony", Prosperity, Victory)
 case object Curse extends AbstractResource ("Curse", Base, CurseSupply)
-case object EmbargoToken extends AbstractResource ("Embargo Token", Prosperity, Unlimited)
+case object EmbargoToken extends AbstractResource ("Embargo Token", Seaside, Unlimited)
 case object CoinToken extends AbstractResource ("Coin Token", Prosperity, Unlimited)
 case object VictoryToken extends AbstractResource ("Victory Token", Prosperity, Unlimited)
 case object NativeVillageMat extends AbstractResource ("Native Village Mat", Seaside, Players)
@@ -47,6 +49,8 @@ case object Villagers extends AbstractResource ("Villagers", Renaissance, Unlimi
 case object Flag extends AbstractResource ("Flag", Renaissance, One)
 case object TreasureChest extends AbstractResource ("Treasure Chest", Renaissance, One)
 case object Key extends AbstractResource ("Key", Renaissance, One)
+case object Horse extends AbstractResource ("Horse", Menagerie, Thirty)
+case object ExileMat extends AbstractResource ("Exile Mat", Menagerie, Players)
 
 // Cost to buy the card.
 sealed trait Cost
@@ -69,6 +73,7 @@ case object Unlimited extends Supply { def get(nPlayers: Int) = None }
 case object One extends Supply { def get(nPlayers: Int) = Some(1) }
 case object Ten extends Supply { def get(nPlayers: Int) = Some(10) }
 case object Twelve extends Supply { def get(nPlayers: Int) = Some(12) }
+case object Thirty extends Supply { def get(nPlayers: Int) = Some(30) }
 case object Players extends Supply { def get(nPlayers: Int) = Some(nPlayers) }
 case object Victory extends Supply { def get(nPlayers: Int) = if(nPlayers == 2) Some(8) else Some(12) }
 case object CurseSupply extends Supply{ def get(nPlayers: Int) = Some(10 * (nPlayers - 1)) }
@@ -88,6 +93,8 @@ object Card {
 }
 case class NormalCard(name: String, pack: Pack, resources: Set[Resource], cost: Cost, supply: Supply) extends Card
 case class Project(name: String, pack: Pack, resources: Set[Resource], cost: Cost) extends Card { val supply: Supply = One }
+case class Way(name: String, pack: Pack, resources: Set[Resource], cost: Cost) extends Card { val supply: Supply = One }
+case class Event(name: String, pack: Pack, resources: Set[Resource], cost: Cost) extends Card { val supply: Supply = One }
 
 
 object App {
@@ -124,8 +131,8 @@ object App {
   // Pick a random set of cards
   def pickNFromDeck(n: Int, deck: Deck): Deck = {
     def _pick(remaining: Deck, current: Deck): Deck = {
-      if     (current.size == n) current
-      else if(remaining.size == 0) current
+      if      (current.size == n) current
+      else if (remaining.size == 0) current
       else {
         val next = remaining.maxBy(_ => random.nextInt)
         _pick(remaining - next, current + next)
@@ -134,14 +141,41 @@ object App {
     _pick(deck, Set())
   }
 
-  def pick(fromPacks: Set[Pack], all: Deck, projects: Deck): Deck = {
+  def pickTwoExtraCards(fromPacks: Set[Pack], extra: Deck): Deck = {
+    // At most one way.
+    // Up to two events or projects
+    val extraShuffled = extra
+      .filter(e => fromPacks.contains(e.pack))
+      .toList
+      .sortBy(_ => random.nextInt)
+
+      def _pick(remaining: List[Card], current: List[Card]): List[Card] = {
+        assert(current.size <= 2)
+        if (current.size == 2) current
+        else if (remaining.size == 0) current
+        else {
+
+          val currentWayCount = current.collect {case w @ Way(_, _, _, _) => w }.size
+
+          remaining.head match {
+            case Way(name, pack, resources, cost) if (currentWayCount > 0) => _pick(remaining.tail, current)
+            case c                                                         => _pick(remaining.tail, c :: current)
+          }
+        }
+      }
+
+      _pick(extraShuffled, List()).toSet
+
+  }
+
+  def pick(fromPacks: Set[Pack], all: Deck, extra: Deck): Deck = {
     val n = 10
     val domain = all.filter(c => fromPacks.contains(c.pack))
 
     val pickedCards = pickNFromDeck(n, domain)
-    val pickedProjects = if (fromPacks.contains(Renaissance)) pickNFromDeck(2, projects) else Set()
+    val pickedExtra = pickTwoExtraCards(fromPacks, extra)
 
-    pickedCards ++ pickedProjects
+    pickedCards ++ pickedExtra
   }
 
   def printCost(cost: Cost): String = cost match {
@@ -153,6 +187,8 @@ object App {
     case NormalCard(name, _, _, cost, Unlimited) => s"  $name"
     case NormalCard(name, _, _, cost, supply) => s"  $name x ${supply.get(nPlayers).get}"
     case p @ Project(name, _, _, cost) => s"  $name x ${p.supply.get(nPlayers).get} (Project)"
+    case p @ Way(name, _, _, cost) => s"  $name x ${p.supply.get(nPlayers).get} (Way)"
+    case p @ Event(name, _, _, cost) => s"  $name x ${p.supply.get(nPlayers).get} (Event)"
   }
 
   def printCards(cards: List[Card], nPlayers: Int): String = cards.sorted.map(printCard(nPlayers)).mkString("\n")
@@ -190,7 +226,7 @@ object App {
       println(s"Generating game for [${nPlayers}] players, chosen from the following packs:")
       packs.foreach(println)
       println()
-      println(printDeck(pick(packs, Cards.cards, Cards.projects), nPlayers))
+      println(printDeck(pick(packs, Cards.cards, Cards.extra), nPlayers))
     case _ =>
       println("The first argument should be the number of players.")
       println("E.g.")
